@@ -1,6 +1,19 @@
 import { FaCalendar, FaStar, FaThumbtack } from "react-icons/fa";
+import { useEffect, useState } from "react";
 
 function MovieCard({ movie, active, togglePin }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   return (
     <div
       className={`group w-75 h-100 bg-zinc-800 rounded-2xl overflow-hidden shrink-0 snap-center relative transition-all duration-300 ${
@@ -13,7 +26,7 @@ function MovieCard({ movie, active, togglePin }) {
         className="w-full h-full object-cover"
       />
 
-      {/* Gradient Shadow */}
+      {/* Gradient Shadow - Hidden on mobile */}
       <div
         className={`
           absolute inset-0
@@ -24,7 +37,7 @@ function MovieCard({ movie, active, togglePin }) {
           transition-opacity
           duration-300
           ${
-            active
+            !isMobile && active
               ? "opacity-0 group-hover:opacity-100"
               : "opacity-0 pointer-events-none"
           }
@@ -58,7 +71,7 @@ function MovieCard({ movie, active, togglePin }) {
         </div>
       </div>
 
-      {/* Pin Button */}
+      {/* Pin Button - Always visible on mobile when active */}
       {active && (
         <button
           onClick={(e) => {
@@ -90,20 +103,21 @@ function MovieCard({ movie, active, togglePin }) {
 
             backdrop-blur-sm
 
-            opacity-0
-            translate-x-4
-            translate-y-4
-            scale-75
-
-            group-hover:opacity-100
-            group-hover:translate-x-0
-            group-hover:translate-y-0
-            group-hover:scale-100
+            ${
+              isMobile
+                ? // Mobile styles - always visible with slight scale
+                  `opacity-100 translate-x-0 translate-y-0 scale-100
+                   active:scale-95 transition-transform duration-150`
+                : // Desktop styles - hover effect
+                  `opacity-0 translate-x-4 translate-y-4 scale-75
+                   group-hover:opacity-100
+                   group-hover:translate-x-0
+                   group-hover:translate-y-0
+                   group-hover:scale-100
+                   transition-all duration-300`
+            }
 
             hover:bg-black/30
-
-            transition-all
-            duration-300
           `}
           aria-label={movie.isPinned ? "Unpin movie" : "Pin movie"}
         >
@@ -112,7 +126,7 @@ function MovieCard({ movie, active, togglePin }) {
               text-sm
               transition-transform
               duration-300
-              group-hover/pin:rotate-12
+              ${!isMobile && "group-hover/pin:rotate-12"}
               ${movie.isPinned ? "rotate-45" : ""}
             `}
           />

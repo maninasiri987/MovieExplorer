@@ -13,6 +13,17 @@ function Search({ movies, togglePin }) {
   const [selectedGenre, setSelectedGenre] = useState("All");
   const [sortBy, setSortBy] = useState("relevance");
   const [showFilters, setShowFilters] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Get unique genres from movies
   const genres = ["All", ...new Set(movies.map((movie) => movie.genre))];
@@ -150,13 +161,22 @@ function Search({ movies, togglePin }) {
           {filteredMovies.length !== 1 ? "s" : ""}
         </div>
 
-        {/* Movies Grid - No skeleton, direct rendering since data is local */}
+        {/* Movies Grid */}
         {filteredMovies.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div
+            className={`
+            grid
+            gap-4 sm:gap-6
+            ${isMobile ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"}
+          `}
+          >
             {filteredMovies.map((movie) => (
               <div
                 key={movie.id}
-                className="group relative bg-gray-800 rounded-xl overflow-hidden transition-transform hover:scale-105"
+                className={`
+                  relative bg-gray-800 rounded-xl overflow-hidden
+                  ${!isMobile && "group transition-transform hover:scale-105"}
+                `}
               >
                 <div className="relative aspect-[2/3]">
                   <img
@@ -165,7 +185,16 @@ function Search({ movies, togglePin }) {
                     className="w-full h-full object-cover"
                   />
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Overlay with movie info - Hidden on mobile, visible on desktop hover */}
+                  <div
+                    className={`
+                      absolute inset-0
+                      bg-gradient-to-t
+                      from-black via-black/50 to-transparent
+                      transition-opacity duration-300
+                      ${!isMobile ? "opacity-0 group-hover:opacity-100" : "hidden"}
+                    `}
+                  >
                     <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
                       <h3 className="text-white text-sm sm:text-lg font-bold truncate">
                         {movie.title}
@@ -182,6 +211,23 @@ function Search({ movies, togglePin }) {
                       </div>
                     </div>
                   </div>
+
+                  {/* Mobile: Always show movie info at bottom */}
+                  {isMobile && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-2 p-sm-3">
+                      <h3 className="text-white text-xs sm:text-sm font-bold truncate">
+                        {movie.title}
+                      </h3>
+                      <div className="flex items-center gap-1 text-xs text-gray-300 mt-1">
+                        <span>{movie.year}</span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <FaStar className="text-yellow-500 text-xs" />
+                          {movie.rating}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Pin Button */}
@@ -194,12 +240,14 @@ function Search({ movies, togglePin }) {
                     cursor-pointer
                     group/pin
                     absolute
-                    bottom-4
-                    right-4
+                    bottom-2
+                    right-2
                     z-20
 
-                    w-9
-                    h-9
+                    w-7
+                    h-7
+                    sm:w-9
+                    sm:h-9
 
                     flex
                     items-center
@@ -215,29 +263,39 @@ function Search({ movies, togglePin }) {
 
                     backdrop-blur-sm
 
-                    opacity-0
-                    translate-x-4
-                    translate-y-4
-                    scale-75
-
-                    group-hover:opacity-100
-                    group-hover:translate-x-0
-                    group-hover:translate-y-0
-                    group-hover:scale-100
-
-                    hover:bg-black/30
-
-                    transition-all
-                    duration-300
+                    ${
+                      isMobile
+                        ? // Mobile styles - always visible with touch feedback
+                          `opacity-100
+                           translate-x-0
+                           translate-y-0
+                           scale-100
+                           active:scale-95
+                           transition-transform
+                           duration-150`
+                        : // Desktop styles - hover effect
+                          `opacity-0
+                           translate-x-4
+                           translate-y-4
+                           scale-75
+                           group-hover:opacity-100
+                           group-hover:translate-x-0
+                           group-hover:translate-y-0
+                           group-hover:scale-100
+                           hover:bg-black/30
+                           transition-all
+                           duration-300`
+                    }
                   `}
                   aria-label={movie.isPinned ? "Unpin movie" : "Pin movie"}
                 >
                   <FaThumbtack
                     className={`
-                      text-sm
+                      text-xs
+                      sm:text-sm
                       transition-transform
                       duration-300
-                      group-hover/pin:rotate-12
+                      ${!isMobile && "group-hover/pin:rotate-12"}
                       ${movie.isPinned ? "rotate-45" : ""}
                     `}
                   />

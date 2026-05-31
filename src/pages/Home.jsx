@@ -4,7 +4,6 @@ import DotsForCards from "../components/DotsForCards";
 import MoveButtons from "../components/MoveButtons";
 
 function Home({ movies, setMovies, togglePin }) {
-  // ← Added togglePin here
   // Handle previous button click
   const handlePrev = () => {
     const newIndex = Math.max(0, activeIndex - 1);
@@ -40,7 +39,7 @@ function Home({ movies, setMovies, togglePin }) {
 
   const displayedMovies = movies;
 
-  // تابع اسکرول نرم با استفاده از requestAnimationFrame
+  // Smooth scroll function using requestAnimationFrame
   const smoothScrollToCenter = (index, duration = isMobile ? 400 : 500) => {
     const container = containerRef.current;
     if (!container || !container.children[index]) return;
@@ -62,7 +61,7 @@ function Home({ movies, setMovies, togglePin }) {
       const elapsed = currentTime - startTime;
       const progress = Math.min(1, elapsed / duration);
 
-      // Easing function برای حرکتی نرم‌تر
+      // Easing function for smoother motion
       const easeOutCubic = 1 - Math.pow(1 - progress, 3);
 
       const newScrollLeft = startScrollLeft + distance * easeOutCubic;
@@ -71,7 +70,7 @@ function Home({ movies, setMovies, togglePin }) {
       if (progress < 1) {
         requestAnimationFrame(animateScroll);
       } else {
-        // اسکرول تمام شد
+        // Scroll finished
         setTimeout(() => {
           isManualScrollingRef.current = false;
           update3DTransforms();
@@ -82,7 +81,7 @@ function Home({ movies, setMovies, togglePin }) {
     requestAnimationFrame(animateScroll);
   };
 
-  // Add click handler با اسکرول نرم
+  // Add click handler with smooth scroll
   const handleCardClick = (index) => {
     smoothScrollToCenter(index);
   };
@@ -92,7 +91,7 @@ function Home({ movies, setMovies, togglePin }) {
     smoothScrollToCenter(index);
   };
 
-  // Update 3D transformations
+  // Update 3D transformations (simplified for mobile)
   const update3DTransforms = () => {
     const container = containerRef.current;
     if (!container) return;
@@ -104,76 +103,89 @@ function Home({ movies, setMovies, togglePin }) {
       const child = childWrapper.children[0];
       if (!child) return;
 
-      const childCenter =
-        childWrapper.offsetLeft + childWrapper.offsetWidth / 2;
-      const distanceFromCenter = childCenter - center;
-      const distancePercent =
-        Math.abs(distanceFromCenter) / (containerWidth / 2);
-
-      // NEW ROTATION LOGIC
-      // Left cards (negative distance) rotate to RIGHT (positive rotation)
-      // Right cards (positive distance) rotate to LEFT (negative rotation)
-      let rotationY = 0;
-      const maxRotation = isMobile ? 35 : 60;
-
-      if (distanceFromCenter < 0) {
-        // Card is on the LEFT - rotate to RIGHT (positive)
-        const normalizedDistance =
-          Math.abs(distanceFromCenter) / (containerWidth / 2);
-        rotationY = Math.min(maxRotation, normalizedDistance * maxRotation);
-      } else if (distanceFromCenter > 0) {
-        // Card is on the RIGHT - rotate to LEFT (negative)
-        const normalizedDistance = distanceFromCenter / (containerWidth / 2);
-        rotationY =
-          Math.min(maxRotation, normalizedDistance * maxRotation) * -1;
-      }
-      // Center card: rotationY stays 0
-
-      // Reduce rotation on mobile
       if (isMobile) {
-        rotationY = rotationY * 0.7;
-      }
+        // Mobile: No 3D transforms, just simple scaling and opacity
+        const childCenter =
+          childWrapper.offsetLeft + childWrapper.offsetWidth / 2;
+        const distanceFromCenter = Math.abs(childCenter - center);
+        const distancePercent = distanceFromCenter / (containerWidth / 2);
 
-      const rotationX = isMobile
-        ? Math.abs(distancePercent) * 5
-        : Math.abs(distancePercent) * 8;
-      const rotationZ = isMobile
-        ? (distanceFromCenter / (containerWidth / 2)) * 2
-        : (distanceFromCenter / (containerWidth / 2)) * 3;
+        // Simple scale effect for mobile
+        const scale = 1 - distancePercent * 0.15;
+        const minScale = 0.85;
+        const finalScale = Math.max(minScale, Math.min(1, scale));
 
-      // DECREASED SCALE - more dramatic scaling for further elements
-      const scale = 1 - distancePercent * 0.25; // Changed from 0.15 to 0.25
-      const minScale = 0.7; // Changed from 0.85 to 0.7
-      const finalScale = Math.max(minScale, Math.min(1, scale));
+        // Opacity effect
+        const opacity = 1 - distancePercent * 0.3;
 
-      const opacity = isMobile
-        ? 1 - distancePercent * 0.2 // Increased from 0.15 to 0.2
-        : 1 - distancePercent * 0.4; // Increased from 0.3 to 0.4
-      const blur = isMobile ? distancePercent * 4 : distancePercent * 8; // Increased blur
-      const zIndex = Math.floor(100 - Math.abs(distanceFromCenter) / 10);
+        // Z-index based on distance
+        const zIndex = Math.floor(100 - Math.abs(distanceFromCenter) / 10);
 
-      child.style.transform = `
-        perspective(1000px)
-        rotateY(${rotationY}deg)
-        rotateX(${rotationX}deg)
-        rotateZ(${rotationZ}deg)
-        scale(${finalScale})
-      `;
-      child.style.transition = isMobile
-        ? "transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
-        : "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
-      child.style.opacity = opacity;
-      child.style.filter = `blur(${blur}px)`;
-      child.style.zIndex = zIndex;
-
-      // Shadow based on rotation direction
-      if (!isMobile && Math.abs(rotationY) > 15) {
-        child.style.boxShadow =
-          rotationY > 0
-            ? "-15px 10px 30px rgba(0,0,0,0.3)"
-            : "15px 10px 30px rgba(0,0,0,0.3)";
+        // Apply simple transforms for mobile (no rotation, no blur)
+        child.style.transform = `scale(${finalScale})`;
+        child.style.transition = "transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)";
+        child.style.opacity = opacity;
+        child.style.filter = "none"; // Remove any blur
+        child.style.zIndex = zIndex;
+        child.style.boxShadow = "0 10px 20px rgba(0,0,0,0.2)";
       } else {
-        child.style.boxShadow = "0 20px 40px rgba(0,0,0,0.2)";
+        // Desktop: Full 3D transforms with rotation and blur
+        const childCenter =
+          childWrapper.offsetLeft + childWrapper.offsetWidth / 2;
+        const distanceFromCenter = childCenter - center;
+        const distancePercent =
+          Math.abs(distanceFromCenter) / (containerWidth / 2);
+
+        // Rotation logic for desktop
+        let rotationY = 0;
+        const maxRotation = 60;
+
+        if (distanceFromCenter < 0) {
+          // Card is on the LEFT - rotate to RIGHT (positive)
+          const normalizedDistance =
+            Math.abs(distanceFromCenter) / (containerWidth / 2);
+          rotationY = Math.min(maxRotation, normalizedDistance * maxRotation);
+        } else if (distanceFromCenter > 0) {
+          // Card is on the RIGHT - rotate to LEFT (negative)
+          const normalizedDistance = distanceFromCenter / (containerWidth / 2);
+          rotationY =
+            Math.min(maxRotation, normalizedDistance * maxRotation) * -1;
+        }
+
+        const rotationX = Math.abs(distancePercent) * 8;
+        const rotationZ = (distanceFromCenter / (containerWidth / 2)) * 3;
+
+        // Scale effect
+        const scale = 1 - distancePercent * 0.25;
+        const minScale = 0.7;
+        const finalScale = Math.max(minScale, Math.min(1, scale));
+
+        const opacity = 1 - distancePercent * 0.4;
+        const blur = distancePercent * 8;
+        const zIndex = Math.floor(100 - Math.abs(distanceFromCenter) / 10);
+
+        // Apply full 3D transforms for desktop
+        child.style.transform = `
+          perspective(1000px)
+          rotateY(${rotationY}deg)
+          rotateX(${rotationX}deg)
+          rotateZ(${rotationZ}deg)
+          scale(${finalScale})
+        `;
+        child.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        child.style.opacity = opacity;
+        child.style.filter = `blur(${blur}px)`;
+        child.style.zIndex = zIndex;
+
+        // Shadow based on rotation direction
+        if (Math.abs(rotationY) > 15) {
+          child.style.boxShadow =
+            rotationY > 0
+              ? "-15px 10px 30px rgba(0,0,0,0.3)"
+              : "15px 10px 30px rgba(0,0,0,0.3)";
+        } else {
+          child.style.boxShadow = "0 20px 40px rgba(0,0,0,0.2)";
+        }
       }
     });
   };
@@ -377,7 +389,7 @@ function Home({ movies, setMovies, togglePin }) {
             alt=""
             className="w-full h-full object-cover scale-110"
             style={{
-              filter: `blur(${isMobile ? "20px" : "40px"})`,
+              filter: `blur(${isMobile ? "10px" : "40px"})`, // Reduced blur on mobile
             }}
           />
         </div>
@@ -389,14 +401,14 @@ function Home({ movies, setMovies, togglePin }) {
               alt=""
               className="w-full h-full object-cover scale-110"
               style={{
-                filter: `blur(${isMobile ? "20px" : "40px"})`,
+                filter: `blur(${isMobile ? "10px" : "40px"})`, // Reduced blur on mobile
               }}
             />
           </div>
         )}
 
         <div
-          className={`absolute inset-0 z-10 ${isMobile ? "bg-black/70" : "bg-black/60"}`}
+          className={`absolute inset-0 z-10 ${isMobile ? "bg-black/80" : "bg-black/60"}`}
         />
       </div>
 
@@ -405,10 +417,10 @@ function Home({ movies, setMovies, togglePin }) {
         <div
           ref={containerRef}
           className={`absolute top-0 left-0 w-full h-full flex items-center overflow-x-auto scrollbar-none ${
-            isMobile ? "gap-2" : "gap-5"
+            isMobile ? "gap-3" : "gap-5"
           }`}
           style={{
-            perspective: "1200px",
+            perspective: isMobile ? "none" : "1200px", // Disable perspective on mobile
             perspectiveOrigin: "center center",
             scrollSnapType: isMobile ? "x mandatory" : "none",
             WebkitOverflowScrolling: "touch",
@@ -421,14 +433,15 @@ function Home({ movies, setMovies, togglePin }) {
                 isMobile ? "snap-center" : ""
               }`}
               style={{
-                transformStyle: "preserve-3d",
+                transformStyle: isMobile ? "flat" : "preserve-3d", // Flat transform on mobile
+                width: isMobile ? "280px" : "auto", // Fixed width for mobile cards
               }}
               onClick={() => handleCardClick(index)}
             >
               <MovieCard
                 movie={movie}
                 active={index === activeIndex}
-                togglePin={togglePin} // ← Pass togglePin to MovieCard
+                togglePin={togglePin}
               />
             </div>
           ))}
