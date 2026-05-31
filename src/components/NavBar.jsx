@@ -18,7 +18,15 @@ function NavBar() {
           : 12;
 
   return (
-    <div className="w-auto h-auto bg-black/10 backdrop-blur-2xl fixed bottom-0 left-1/2 translate-x-[-50%] p-2 text-white border-2 border-white/50 rounded-t-2xl flex justify-center gap-3 items-center flex-row z-100">
+    <div
+      className={`
+        w-auto h-auto
+        fixed bottom-0 left-1/2 translate-x-[-50%] p-2
+        text-white border-2 border-white/50 rounded-t-2xl
+        flex justify-center gap-3 items-center flex-row z-100
+        bg-black/80
+      `}
+    >
       <NavLink
         className={({ isActive }) =>
           `${NavStyles} ${isActive ? "opacity-100" : "opacity-50"}`
