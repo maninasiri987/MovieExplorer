@@ -101,14 +101,14 @@ function MovieCard({ movie, active, togglePin }) {
                 : "border-white/50 bg-black/10 text-white"
             }
 
-            backdrop-blur-sm
+            ${isMobile ? "" : "backdrop-blur-sm"}
 
             ${
               isMobile
-                ? // Mobile styles - always visible with slight scale
+                ? // Mobile styles - always visible with slight scale, NO backdrop-blur
                   `opacity-100 translate-x-0 translate-y-0 scale-100
                    active:scale-95 transition-transform duration-150`
-                : // Desktop styles - hover effect
+                : // Desktop styles - hover effect WITH backdrop-blur
                   `opacity-0 translate-x-4 translate-y-4 scale-75
                    group-hover:opacity-100
                    group-hover:translate-x-0
