@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaSearch,
   FaFilter,
@@ -14,6 +15,7 @@ function Search({ movies, togglePin }) {
   const [sortBy, setSortBy] = useState("relevance");
   const [showFilters, setShowFilters] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const navigate = useNavigate();
 
   // Check if mobile device
   useEffect(() => {
@@ -24,6 +26,11 @@ function Search({ movies, togglePin }) {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Helper function to convert title to URL-friendly format
+  const getMovieUrl = (title) => {
+    return title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  };
 
   // Get unique genres from movies
   const genres = ["All", ...new Set(movies.map((movie) => movie.genre))];
@@ -69,6 +76,10 @@ function Search({ movies, togglePin }) {
     setSearchTerm("");
     setSelectedGenre("All");
     setSortBy("relevance");
+  };
+
+  const handleMovieClick = (movie) => {
+    navigate(`/movie/${getMovieUrl(movie.title)}`);
   };
 
   return (
@@ -173,8 +184,9 @@ function Search({ movies, togglePin }) {
             {filteredMovies.map((movie) => (
               <div
                 key={movie.id}
+                onClick={() => handleMovieClick(movie)}
                 className={`
-                  relative bg-gray-800 rounded-xl overflow-hidden
+                  relative bg-gray-800 rounded-xl overflow-hidden cursor-pointer
                   ${!isMobile && "group transition-transform hover:scale-105"}
                 `}
               >

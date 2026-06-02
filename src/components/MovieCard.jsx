@@ -1,8 +1,10 @@
 import { FaCalendar, FaStar, FaThumbtack } from "react-icons/fa";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function MovieCard({ movie, active, togglePin }) {
   const [isMobile, setIsMobile] = useState(false);
+  const navigate = useNavigate();
 
   // Check if mobile device
   useEffect(() => {
@@ -14,8 +16,20 @@ function MovieCard({ movie, active, togglePin }) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Helper function to convert title to URL-friendly format
+  const getMovieUrl = (title) => {
+    return title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  };
+
+  // Handle card click navigation
+  const handleCardClick = () => {
+    const url = `/movie/${getMovieUrl(movie.title)}`;
+    navigate(url);
+  };
+
   return (
     <div
+      onClick={active ? handleCardClick : undefined}
       className={`group w-75 h-100 bg-zinc-800 rounded-2xl overflow-hidden shrink-0 snap-center relative transition-all duration-300 ${
         active ? "cursor-pointer" : "cursor-default"
       }`}

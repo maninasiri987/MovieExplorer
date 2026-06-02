@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import Search from "./pages/Search";
 import Pins from "./pages/Pins";
+import MovieDetails from "./pages/MovieDetails";
 import NavBar from "./components/NavBar";
 import { useState, useEffect } from "react";
 
@@ -39,6 +40,10 @@ function App() {
         poster: poster1,
         bgPoster: bgPoster1,
         isPinned: false,
+        description:
+          "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
+        director: "Christopher Nolan",
+        cast: ["Leonardo DiCaprio", "Joseph Gordon-Levitt", "Elliot Page"],
       },
       {
         id: 2,
@@ -49,6 +54,10 @@ function App() {
         poster: poster2,
         bgPoster: bgPoster2,
         isPinned: false,
+        description:
+          "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.",
+        director: "Christopher Nolan",
+        cast: ["Matthew McConaughey", "Anne Hathaway", "Jessica Chastain"],
       },
       {
         id: 3,
@@ -59,6 +68,10 @@ function App() {
         poster: poster3,
         bgPoster: bgPoster3,
         isPinned: false,
+        description:
+          "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.",
+        director: "Christopher Nolan",
+        cast: ["Christian Bale", "Heath Ledger", "Aaron Eckhart"],
       },
       {
         id: 4,
@@ -69,6 +82,10 @@ function App() {
         poster: poster4,
         bgPoster: bgPoster4,
         isPinned: false,
+        description:
+          "An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more.",
+        director: "David Fincher",
+        cast: ["Brad Pitt", "Edward Norton", "Helena Bonham Carter"],
       },
       {
         id: 5,
@@ -79,6 +96,10 @@ function App() {
         poster: poster5,
         bgPoster: bgPoster5,
         isPinned: false,
+        description:
+          "A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers.",
+        director: "Lana Wachowski, Lilly Wachowski",
+        cast: ["Keanu Reeves", "Laurence Fishburne", "Carrie-Anne Moss"],
       },
       {
         id: 6,
@@ -89,6 +110,10 @@ function App() {
         poster: poster6,
         bgPoster: bgPoster6,
         isPinned: false,
+        description:
+          "In Gotham City, mentally troubled comedian Arthur Fleck is disregarded and mistreated by society. He then embarks on a downward spiral of revolution and bloody crime.",
+        director: "Todd Phillips",
+        cast: ["Joaquin Phoenix", "Robert De Niro", "Zazie Beetz"],
       },
       {
         id: 7,
@@ -99,6 +124,10 @@ function App() {
         poster: poster7,
         bgPoster: bgPoster7,
         isPinned: false,
+        description:
+          "Greed and class discrimination threaten the newly formed symbiotic relationship between the wealthy Park family and the destitute Kim clan.",
+        director: "Bong Joon-ho",
+        cast: ["Song Kang-ho", "Lee Sun-kyun", "Cho Yeo-jeong"],
       },
       {
         id: 8,
@@ -109,6 +138,10 @@ function App() {
         poster: poster8,
         bgPoster: bgPoster8,
         isPinned: false,
+        description:
+          "After the devastating events of Avengers: Infinity War, the universe is in ruins. With the help of remaining allies, the Avengers assemble once more in order to reverse Thanos' actions and restore balance to the universe.",
+        director: "Anthony Russo, Joe Russo",
+        cast: ["Robert Downey Jr.", "Chris Evans", "Mark Ruffalo"],
       },
     ];
 
@@ -154,6 +187,10 @@ function App() {
         <Route
           path="/pins"
           element={<Pins pinnedMovies={pinnedMovies} togglePin={togglePin} />}
+        />
+        <Route
+          path="/movie/:movieName"
+          element={<MovieDetails movies={movies} togglePin={togglePin} />}
         />
       </Routes>
     </BrowserRouter>
