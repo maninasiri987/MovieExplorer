@@ -44,7 +44,7 @@ function MovieCard({ movie, active, togglePin }) {
       <div
         className={`
           absolute inset-0
-          bg-gradient-to-t
+          bg-linear-to-t
           from-black/90
           via-black/40
           to-transparent

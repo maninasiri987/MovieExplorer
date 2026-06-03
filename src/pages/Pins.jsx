@@ -1,8 +1,15 @@
 import { FaStar, FaThumbtack, FaTrash } from "react-icons/fa";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Pins({ pinnedMovies, togglePin }) {
+  const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
+
+  // Helper function to convert movie title to URL-friendly format
+  const getMovieSlug = (title) => {
+    return title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  };
 
   // Check if mobile device
   useEffect(() => {
@@ -13,6 +20,17 @@ function Pins({ pinnedMovies, togglePin }) {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Handle movie click
+  const handleMovieClick = (movie) => {
+    navigate(`/movie/${getMovieSlug(movie.title)}`);
+  };
+
+  // Handle unpin button click (stops event propagation)
+  const handleUnpinClick = (e, movieId) => {
+    e.stopPropagation(); // Prevents the movie click event from firing
+    togglePin(movieId);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black pt-20 pb-24 px-4">
@@ -42,9 +60,12 @@ function Pins({ pinnedMovies, togglePin }) {
             {pinnedMovies.map((movie) => (
               <div
                 key={movie.id}
+                onClick={() => handleMovieClick(movie)}
                 className={`
                   relative bg-gray-800 rounded-xl overflow-hidden
+                  cursor-pointer
                   ${!isMobile && "group transition-transform hover:scale-105"}
+                  ${!isMobile && "hover:shadow-2xl hover:shadow-yellow-500/20"}
                 `}
               >
                 <div className="relative aspect-[2/3]">
@@ -106,7 +127,7 @@ function Pins({ pinnedMovies, togglePin }) {
 
                 {/* Delete/Unpin Button */}
                 <button
-                  onClick={() => togglePin(movie.id)}
+                  onClick={(e) => handleUnpinClick(e, movie.id)}
                   className={`
                     cursor-pointer
                     group/unpin

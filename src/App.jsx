@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import Search from "./pages/Search";
 import Pins from "./pages/Pins";
@@ -171,7 +171,7 @@ function App() {
   const pinnedMovies = movies.filter((movie) => movie.isPinned);
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <NavBar />
       <Routes>
         <Route
@@ -193,7 +193,7 @@ function App() {
           element={<MovieDetails movies={movies} togglePin={togglePin} />}
         />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

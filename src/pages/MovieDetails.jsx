@@ -14,6 +14,18 @@ function MovieDetails({ movies, togglePin }) {
   const { movieName } = useParams();
   const navigate = useNavigate();
   const [movie, setMovie] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     const foundMovie = movies.find(
@@ -43,7 +55,7 @@ function MovieDetails({ movies, togglePin }) {
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="
+        className={`
           fixed
           top-4
           left-4
@@ -61,13 +73,16 @@ function MovieDetails({ movies, togglePin }) {
           cursor-pointer
           hover:bg-white/20
           transition-all
-        "
+          ${isMobile ? "top-2 left-2 w-10 h-10" : ""}
+        `}
       >
-        <FaArrowLeft />
+        <FaArrowLeft className={isMobile ? "text-sm" : "text-base"} />
       </button>
 
       {/* Hero */}
-      <section className="relative h-[70vh] overflow-hidden">
+      <section
+        className={`relative ${isMobile ? "h-[50vh]" : "h-[70vh]"} overflow-hidden`}
+      >
         <img
           src={movie.bgPoster || movie.poster}
           alt={movie.title}
@@ -77,7 +92,9 @@ function MovieDetails({ movies, togglePin }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/10" />
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/50 to-transparent" />
 
-        <div className="relative z-10 h-full max-w-7xl mx-auto px-6 flex items-end pb-16">
+        <div
+          className={`relative z-10 h-full max-w-7xl mx-auto px-6 flex items-end ${isMobile ? "pb-8" : "pb-16"}`}
+        >
           <div className="max-w-3xl">
             <div className="flex flex-wrap gap-3 mb-5">
               <span className="px-4 py-2 rounded-full bg-transparent border border-white/20 text-sm">
@@ -95,11 +112,15 @@ function MovieDetails({ movies, togglePin }) {
               </span>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-black mb-5">
+            <h1
+              className={`${isMobile ? "text-3xl" : "text-5xl md:text-7xl"} font-black mb-5`}
+            >
               {movie.title}
             </h1>
 
-            <p className="text-gray-300 text-lg max-w-2xl">
+            <p
+              className={`text-gray-300 ${isMobile ? "text-sm line-clamp-3" : "text-lg"} max-w-2xl`}
+            >
               {movie.description}
             </p>
           </div>
@@ -107,28 +128,57 @@ function MovieDetails({ movies, togglePin }) {
       </section>
 
       {/* Content */}
-      <section className="max-w-7xl mx-auto px-6 py-12">
+      <section
+        className={`max-w-7xl mx-auto px-6 ${isMobile ? "py-6" : "py-12"}`}
+      >
         <div className="grid lg:grid-cols-[350px_1fr] gap-10">
-          {/* Poster */}
-          <div>
-            <div
-              className="
-                overflow-hidden
-                rounded-3xl
-                border
-                border-white/10
-                bg-white/5
-                backdrop-blur-xl
-                shadow-2xl
-              "
-            >
-              <img
-                src={movie.poster}
-                alt={movie.title}
-                className="w-full object-cover"
-              />
+          {/* Poster - Hidden on mobile or shown at top */}
+          {!isMobile && (
+            <div>
+              <div
+                className="
+                  overflow-hidden
+                  rounded-3xl
+                  border
+                  border-white/10
+                  bg-white/5
+                  backdrop-blur-xl
+                  shadow-2xl
+                "
+              >
+                <img
+                  src={movie.poster}
+                  alt={movie.title}
+                  className="w-full object-cover"
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Mobile Poster */}
+          {isMobile && (
+            <div className="mb-6">
+              <div
+                className="
+                  overflow-hidden
+                  rounded-2xl
+                  border
+                  border-white/10
+                  bg-white/5
+                  backdrop-blur-xl
+                  shadow-2xl
+                  max-w-[200px]
+                  mx-auto
+                "
+              >
+                <img
+                  src={movie.poster}
+                  alt={movie.title}
+                  className="w-full object-cover"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Details */}
           <div className="space-y-8">
@@ -268,6 +318,7 @@ function MovieDetails({ movies, togglePin }) {
                       bg-white/10
                       border
                       border-white/10
+                      text-sm
                     "
                   >
                     {actor}
@@ -280,24 +331,37 @@ function MovieDetails({ movies, togglePin }) {
             <div className="grid md:grid-cols-3 gap-4">
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
                 <p className="text-gray-400 text-sm">Release Year</p>
-                <h3 className="text-2xl font-bold mt-1">{movie.year}</h3>
+                <h3
+                  className={`${isMobile ? "text-xl" : "text-2xl"} font-bold mt-1`}
+                >
+                  {movie.year}
+                </h3>
               </div>
 
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
                 <p className="text-gray-400 text-sm">Rating</p>
-                <h3 className="text-2xl font-bold mt-1 text-yellow-400">
+                <h3
+                  className={`${isMobile ? "text-xl" : "text-2xl"} font-bold mt-1 text-yellow-400`}
+                >
                   {movie.rating}/10
                 </h3>
               </div>
 
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
                 <p className="text-gray-400 text-sm">Genre</p>
-                <h3 className="text-2xl font-bold mt-1">{movie.genre}</h3>
+                <h3
+                  className={`${isMobile ? "text-xl" : "text-2xl"} font-bold mt-1`}
+                >
+                  {movie.genre}
+                </h3>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Add padding at the bottom of the page */}
+      <div className={`${isMobile ? "pb-13" : "pb-16"}`}></div>
     </div>
   );
 }

@@ -3,12 +3,28 @@ import MovieCard from "../components/MovieCard";
 import DotsForCards from "../components/DotsForCards";
 import MoveButtons from "../components/MoveButtons";
 
-function Home({ movies, setMovies, togglePin }) {
+function Home({ movies, togglePin }) {
   const containerRef = useRef(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Load saved scroll index from localStorage
+  const getSavedScrollIndex = () => {
+    try {
+      const saved = localStorage.getItem("home_scroll_index");
+      return saved !== null ? parseInt(saved, 10) : 0;
+    } catch (error) {
+      console.error("Error reading scroll index:", error);
+      return 0;
+    }
+  };
+
+  const [activeIndex, setActiveIndex] = useState(getSavedScrollIndex());
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [currentBg, setCurrentBg] = useState({
-    poster: movies[0]?.bgPoster || movies[0]?.poster,
-    key: 0,
+    poster:
+      movies[getSavedScrollIndex()]?.bgPoster ||
+      movies[getSavedScrollIndex()]?.poster ||
+      movies[0]?.poster,
+    key: getSavedScrollIndex(),
   });
   const [nextBg, setNextBg] = useState(null);
   const isManualScrollingRef = useRef(false);
@@ -16,6 +32,17 @@ function Home({ movies, setMovies, togglePin }) {
   const [isMobile, setIsMobile] = useState(false);
   const rafRef = useRef(null);
   const scrollTickingRef = useRef(false);
+
+  // Save scroll index to localStorage whenever it changes
+  useEffect(() => {
+    if (!isInitialLoad) {
+      try {
+        localStorage.setItem("home_scroll_index", activeIndex.toString());
+      } catch (error) {
+        console.error("Error saving scroll index:", error);
+      }
+    }
+  }, [activeIndex, isInitialLoad]);
 
   // Check if mobile device - optimized with debounce
   useEffect(() => {
@@ -400,7 +427,7 @@ function Home({ movies, setMovies, togglePin }) {
     updateDesktopTransforms,
   ]);
 
-  // Initial setup
+  // Initial setup - scroll to saved index
   useEffect(() => {
     const initTimeout = setTimeout(() => {
       if (isMobile) {
@@ -409,9 +436,15 @@ function Home({ movies, setMovies, togglePin }) {
         updateDesktopTransforms();
       }
 
-      if (movies.length > 0) {
+      // Scroll to saved index on initial load
+      const savedIndex = getSavedScrollIndex();
+      if (movies.length > 0 && savedIndex >= 0 && savedIndex < movies.length) {
+        smoothScrollToCenter(savedIndex, 0);
+      } else if (movies.length > 0) {
         smoothScrollToCenter(0, 0);
       }
+
+      setIsInitialLoad(false);
     }, 100);
 
     return () => {
@@ -420,7 +453,7 @@ function Home({ movies, setMovies, togglePin }) {
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, []);
+  }, []); // Empty dependency array - only run once on mount
 
   // Memoized movie cards to prevent unnecessary re-renders
   const movieCards = useMemo(
