@@ -1,9 +1,19 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import MovieCard from "../components/MovieCard";
 import DotsForCards from "../components/DotsForCards";
 import MoveButtons from "../components/MoveButtons";
+import useIsMobile from "../hooks/useIsMobile";
+import usePageTitle from "../hooks/usePageTitle";
+
+const setStyleIfChanged = (element, property, value) => {
+  if (element.style[property] !== value) {
+    element.style[property] = value;
+  }
+};
 
 function Home({ movies, togglePin }) {
+  usePageTitle("Home");
+
   const containerRef = useRef(null);
 
   // Load saved scroll index from localStorage
@@ -29,7 +39,7 @@ function Home({ movies, togglePin }) {
   const [nextBg, setNextBg] = useState(null);
   const isManualScrollingRef = useRef(false);
   const scrollTimeoutRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const rafRef = useRef(null);
   const scrollTickingRef = useRef(false);
 
@@ -44,38 +54,92 @@ function Home({ movies, togglePin }) {
     }
   }, [activeIndex, isInitialLoad]);
 
-  // Check if mobile device - optimized with debounce
-  useEffect(() => {
-    let resizeTimer;
-
-    const checkMobile = () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        setIsMobile(window.innerWidth < 768);
-      }, 100);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => {
-      window.removeEventListener("resize", checkMobile);
-      clearTimeout(resizeTimer);
-    };
-  }, []);
-
   const displayedMovies = movies;
 
-  // Handle previous button click
-  const handlePrev = useCallback(() => {
-    const newIndex = Math.max(0, activeIndex - 1);
-    smoothScrollToCenter(newIndex);
-  }, [activeIndex]);
+  // Optimized mobile transforms - NO BLUR
+  const updateMobileTransforms = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-  // Handle next button click
-  const handleNext = useCallback(() => {
-    const newIndex = Math.min(displayedMovies.length - 1, activeIndex + 1);
-    smoothScrollToCenter(newIndex);
-  }, [activeIndex, displayedMovies.length]);
+    const center = container.scrollLeft + container.clientWidth / 2;
+    const containerWidth = container.clientWidth;
+
+    // Batch DOM operations
+    const children = Array.from(container.children);
+    children.forEach((childWrapper) => {
+      const child = childWrapper.children[0];
+      if (!child) return;
+
+      const childCenter =
+        childWrapper.offsetLeft + childWrapper.offsetWidth / 2;
+      const distanceFromCenter = Math.abs(childCenter - center);
+      const distancePercent = Math.min(
+        distanceFromCenter / (containerWidth / 2),
+        1,
+      );
+
+      // Simplified transforms for mobile - NO BLUR
+      const scale = Math.max(0.85, 1 - distancePercent * 0.15);
+      const opacity = Math.max(0.7, 1 - distancePercent * 0.3);
+
+      // Use transform3d for GPU acceleration and skip duplicate style writes.
+      setStyleIfChanged(child, "transform", `scale3d(${scale}, ${scale}, 1)`);
+      setStyleIfChanged(child, "opacity", `${opacity}`);
+      setStyleIfChanged(child, "filter", "none");
+    });
+  }, []);
+
+  // Desktop transforms - avoid blur filters because they repaint heavily while scrolling.
+  const updateDesktopTransforms = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const center = container.scrollLeft + container.clientWidth / 2;
+    const containerWidth = container.clientWidth;
+
+    Array.from(container.children).forEach((childWrapper) => {
+      const child = childWrapper.children[0];
+      if (!child) return;
+
+      const childCenter =
+        childWrapper.offsetLeft + childWrapper.offsetWidth / 2;
+      const distanceFromCenter = childCenter - center;
+      const distancePercent =
+        Math.abs(distanceFromCenter) / (containerWidth / 2);
+
+      let rotationY = 0;
+      const maxRotation = 60;
+
+      if (distanceFromCenter < 0) {
+        const normalizedDistance =
+          Math.abs(distanceFromCenter) / (containerWidth / 2);
+        rotationY = Math.min(maxRotation, normalizedDistance * maxRotation);
+      } else if (distanceFromCenter > 0) {
+        const normalizedDistance = distanceFromCenter / (containerWidth / 2);
+        rotationY =
+          Math.min(maxRotation, normalizedDistance * maxRotation) * -1;
+      }
+
+      const rotationX = Math.abs(distancePercent) * 8;
+      const rotationZ = (distanceFromCenter / (containerWidth / 2)) * 3;
+      const scale = Math.max(0.72, 1 - distancePercent * 0.22);
+      const opacity = Math.max(0.65, 1 - distancePercent * 0.35);
+      const transform = `perspective(1000px) rotateY(${rotationY}deg) rotateX(${rotationX}deg) rotateZ(${rotationZ}deg) scale(${scale})`;
+      const zIndex = `${Math.floor(100 - Math.abs(distanceFromCenter) / 10)}`;
+      const boxShadow =
+        Math.abs(rotationY) > 15
+          ? rotationY > 0
+            ? "-15px 10px 30px rgba(0,0,0,0.3)"
+            : "15px 10px 30px rgba(0,0,0,0.3)"
+          : "0 20px 40px rgba(0,0,0,0.2)";
+
+      setStyleIfChanged(child, "transform", transform);
+      setStyleIfChanged(child, "opacity", `${opacity}`);
+      setStyleIfChanged(child, "filter", "none");
+      setStyleIfChanged(child, "zIndex", zIndex);
+      setStyleIfChanged(child, "boxShadow", boxShadow);
+    });
+  }, []);
 
   // Smooth scroll function - optimized for mobile
   const smoothScrollToCenter = useCallback(
@@ -135,8 +199,20 @@ function Home({ movies, togglePin }) {
 
       rafRef.current = requestAnimationFrame(animateScroll);
     },
-    [isMobile],
+    [isMobile, updateDesktopTransforms, updateMobileTransforms],
   );
+
+  // Handle previous button click
+  const handlePrev = useCallback(() => {
+    const newIndex = Math.max(0, activeIndex - 1);
+    smoothScrollToCenter(newIndex);
+  }, [activeIndex, smoothScrollToCenter]);
+
+  // Handle next button click
+  const handleNext = useCallback(() => {
+    const newIndex = Math.min(displayedMovies.length - 1, activeIndex + 1);
+    smoothScrollToCenter(newIndex);
+  }, [activeIndex, displayedMovies.length, smoothScrollToCenter]);
 
   // Handle card click
   const handleCardClick = useCallback(
@@ -153,98 +229,6 @@ function Home({ movies, togglePin }) {
     },
     [smoothScrollToCenter],
   );
-
-  // Optimized mobile transforms - NO BLUR
-  const updateMobileTransforms = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const center = container.scrollLeft + container.clientWidth / 2;
-    const containerWidth = container.clientWidth;
-
-    // Batch DOM operations
-    const children = Array.from(container.children);
-    children.forEach((childWrapper) => {
-      const child = childWrapper.children[0];
-      if (!child) return;
-
-      const childCenter =
-        childWrapper.offsetLeft + childWrapper.offsetWidth / 2;
-      const distanceFromCenter = Math.abs(childCenter - center);
-      const distancePercent = Math.min(
-        distanceFromCenter / (containerWidth / 2),
-        1,
-      );
-
-      // Simplified transforms for mobile - NO BLUR
-      const scale = Math.max(0.85, 1 - distancePercent * 0.15);
-      const opacity = Math.max(0.7, 1 - distancePercent * 0.3);
-
-      // Use transform3d for GPU acceleration
-      child.style.transform = `scale3d(${scale}, ${scale}, 1)`;
-      child.style.opacity = opacity;
-      child.style.filter = "none"; // Explicitly remove any blur
-    });
-  }, []);
-
-  // Desktop transforms - keep original complex transforms with blur
-  const updateDesktopTransforms = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const center = container.scrollLeft + container.clientWidth / 2;
-    const containerWidth = container.clientWidth;
-
-    Array.from(container.children).forEach((childWrapper) => {
-      const child = childWrapper.children[0];
-      if (!child) return;
-
-      const childCenter =
-        childWrapper.offsetLeft + childWrapper.offsetWidth / 2;
-      const distanceFromCenter = childCenter - center;
-      const distancePercent =
-        Math.abs(distanceFromCenter) / (containerWidth / 2);
-
-      let rotationY = 0;
-      const maxRotation = 60;
-
-      if (distanceFromCenter < 0) {
-        const normalizedDistance =
-          Math.abs(distanceFromCenter) / (containerWidth / 2);
-        rotationY = Math.min(maxRotation, normalizedDistance * maxRotation);
-      } else if (distanceFromCenter > 0) {
-        const normalizedDistance = distanceFromCenter / (containerWidth / 2);
-        rotationY =
-          Math.min(maxRotation, normalizedDistance * maxRotation) * -1;
-      }
-
-      const rotationX = Math.abs(distancePercent) * 8;
-      const rotationZ = (distanceFromCenter / (containerWidth / 2)) * 3;
-      const scale = Math.max(0.7, 1 - distancePercent * 0.25);
-      const opacity = Math.max(0.6, 1 - distancePercent * 0.4);
-      const blur = Math.min(distancePercent * 8, 8); // Keep blur for desktop
-
-      child.style.transform = `
-        perspective(1000px)
-        rotateY(${rotationY}deg)
-        rotateX(${rotationX}deg)
-        rotateZ(${rotationZ}deg)
-        scale(${scale})
-      `;
-      child.style.opacity = opacity;
-      child.style.filter = `blur(${blur}px)`; // Blur only on desktop
-      child.style.zIndex = Math.floor(100 - Math.abs(distanceFromCenter) / 10);
-
-      if (Math.abs(rotationY) > 15) {
-        child.style.boxShadow =
-          rotationY > 0
-            ? "-15px 10px 30px rgba(0,0,0,0.3)"
-            : "15px 10px 30px rgba(0,0,0,0.3)";
-      } else {
-        child.style.boxShadow = "0 20px 40px rgba(0,0,0,0.2)";
-      }
-    });
-  }, []);
 
   // Optimized scroll handler with requestAnimationFrame throttling
   useEffect(() => {
@@ -357,13 +341,16 @@ function Home({ movies, togglePin }) {
       displayedMovies[activeIndex]?.bgPoster ||
       displayedMovies[activeIndex]?.poster;
 
-    if (newPoster && newPoster !== currentBg.poster) {
+    if (!newPoster || newPoster === currentBg.poster) return;
+
+    let finishTimer;
+    const startTimer = setTimeout(() => {
       setNextBg({
         poster: newPoster,
         key: Date.now(),
       });
 
-      const timer = setTimeout(
+      finishTimer = setTimeout(
         () => {
           setCurrentBg({
             poster: newPoster,
@@ -373,9 +360,12 @@ function Home({ movies, togglePin }) {
         },
         isMobile ? 400 : 700,
       ); // Faster on mobile
+    }, 0);
 
-      return () => clearTimeout(timer);
-    }
+    return () => {
+      clearTimeout(startTimer);
+      clearTimeout(finishTimer);
+    };
   }, [activeIndex, displayedMovies, currentBg.poster, isMobile]);
 
   // Optimized padding calculation with debouncing
@@ -453,7 +443,13 @@ function Home({ movies, togglePin }) {
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, []); // Empty dependency array - only run once on mount
+  }, [
+    isMobile,
+    movies.length,
+    smoothScrollToCenter,
+    updateDesktopTransforms,
+    updateMobileTransforms,
+  ]);
 
   // Memoized movie cards to prevent unnecessary re-renders
   const movieCards = useMemo(
@@ -467,9 +463,7 @@ function Home({ movies, togglePin }) {
           style={{
             transformStyle: isMobile ? "flat" : "preserve-3d",
             width: isMobile ? "280px" : "auto",
-            willChange: isMobile
-              ? "transform, opacity"
-              : "transform, opacity, filter",
+            willChange: "transform, opacity",
           }}
           onClick={() => handleCardClick(index)}
         >
@@ -477,6 +471,7 @@ function Home({ movies, togglePin }) {
             movie={movie}
             active={index === activeIndex}
             togglePin={togglePin}
+            isMobile={isMobile}
           />
         </div>
       )),
@@ -497,8 +492,8 @@ function Home({ movies, togglePin }) {
             className="w-full h-full object-cover scale-110"
             loading="lazy"
             style={{
-              filter: isMobile ? "none" : "blur(40px)", // No blur on mobile
-              willChange: isMobile ? "none" : "filter",
+              filter: "none",
+              willChange: "transform",
             }}
           />
         </div>
@@ -511,8 +506,8 @@ function Home({ movies, togglePin }) {
               className="w-full h-full object-cover scale-110"
               loading="lazy"
               style={{
-                filter: isMobile ? "none" : "blur(40px)", // No blur on mobile
-                willChange: isMobile ? "none" : "filter",
+                filter: "none",
+                willChange: "transform",
               }}
             />
           </div>

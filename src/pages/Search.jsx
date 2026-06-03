@@ -1,5 +1,8 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useIsMobile from "../hooks/useIsMobile";
+import usePageTitle from "../hooks/usePageTitle";
+import { getMovieSlug, movieMatchesSearch } from "../utils/movieUtils";
 import {
   FaSearch,
   FaFilter,
@@ -9,41 +12,28 @@ import {
 } from "react-icons/fa";
 
 function Search({ movies, togglePin }) {
+  usePageTitle("Search");
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredMovies, setFilteredMovies] = useState(movies);
   const [selectedGenre, setSelectedGenre] = useState("All");
   const [sortBy, setSortBy] = useState("relevance");
   const [showFilters, setShowFilters] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
 
-  // Check if mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  // Helper function to convert title to URL-friendly format
-  const getMovieUrl = (title) => {
-    return title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  };
-
   // Get unique genres from movies
-  const genres = ["All", ...new Set(movies.map((movie) => movie.genre))];
+  const genres = useMemo(
+    () => ["All", ...new Set(movies.map((movie) => movie.genre))],
+    [movies],
+  );
 
-  // Filter and sort movies (no loading state needed for local data)
-  useEffect(() => {
+  // Filter and sort movies (derived from local data, so no extra render needed)
+  const filteredMovies = useMemo(() => {
     let results = [...movies];
 
-    // Search filter
+    // Search title, genre, year, rating, director, and cast.
     if (searchTerm) {
-      results = results.filter((movie) =>
-        movie.title.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
+      results = results.filter((movie) => movieMatchesSearch(movie, searchTerm));
     }
 
     // Genre filter
@@ -69,7 +59,7 @@ function Search({ movies, togglePin }) {
         break;
     }
 
-    setFilteredMovies(results);
+    return results;
   }, [searchTerm, selectedGenre, sortBy, movies]);
 
   const clearSearch = () => {
@@ -79,7 +69,7 @@ function Search({ movies, togglePin }) {
   };
 
   const handleMovieClick = (movie) => {
-    navigate(`/movie/${getMovieUrl(movie.title)}`);
+    navigate(`/movie/${getMovieSlug(movie.title)}`);
   };
 
   return (
@@ -100,7 +90,7 @@ function Search({ movies, togglePin }) {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by movie title..."
+            placeholder="Search by title, actor, director, genre, or year..."
             className="w-full pl-12 pr-12 py-4 bg-gray-800/50 backdrop-blur-sm text-white rounded-xl border border-gray-700 focus:border-blue-500 focus:outline-none transition-all"
             autoFocus
           />

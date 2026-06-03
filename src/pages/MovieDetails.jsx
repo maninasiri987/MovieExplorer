@@ -1,6 +1,9 @@
 // pages/MovieDetails.jsx
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import useIsMobile from "../hooks/useIsMobile";
+import usePageTitle from "../hooks/usePageTitle";
+import { getMovieSlug } from "../utils/movieUtils";
 import {
   FaCalendar,
   FaStar,
@@ -13,26 +16,14 @@ import {
 function MovieDetails({ movies, togglePin }) {
   const { movieName } = useParams();
   const navigate = useNavigate();
-  const [movie, setMovie] = useState(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
 
-  // Check if mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+  const movie = useMemo(
+    () => movies.find((item) => getMovieSlug(item.title) === movieName),
+    [movieName, movies],
+  );
 
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
-    const foundMovie = movies.find(
-      (m) => m.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") === movieName,
-    );
-    setMovie(foundMovie);
-  }, [movieName, movies]);
+  usePageTitle(movie ? movie.title : "Movie Not Found");
 
   if (!movie) {
     return (
