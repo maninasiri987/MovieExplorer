@@ -1,25 +1,14 @@
 import { FaStar, FaThumbtack, FaTrash } from "react-icons/fa";
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useIsMobile from "../hooks/useIsMobile";
+import usePageTitle from "../hooks/usePageTitle";
+import { getMovieSlug } from "../utils/movieUtils";
 
-function Pins({ pinnedMovies, togglePin }) {
+function Pins({ pinnedMovies, togglePin, clearPins }) {
+  usePageTitle("Pinned Movies");
+
   const navigate = useNavigate();
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Helper function to convert movie title to URL-friendly format
-  const getMovieSlug = (title) => {
-    return title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  };
-
-  // Check if mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  const isMobile = useIsMobile();
 
   // Handle movie click
   const handleMovieClick = (movie) => {
@@ -42,10 +31,21 @@ function Pins({ pinnedMovies, togglePin }) {
         </h1>
 
         {/* Pinned Movies Count */}
-        <div className="mb-6 text-gray-400 text-center">
-          {pinnedMovies.length === 0
-            ? "No pinned movies yet"
-            : `You have ${pinnedMovies.length} pinned movie${pinnedMovies.length !== 1 ? "s" : ""}`}
+        <div className="mb-6 flex flex-col items-center justify-center gap-4 text-center text-gray-400 sm:flex-row">
+          <span>
+            {pinnedMovies.length === 0
+              ? "No pinned movies yet"
+              : `You have ${pinnedMovies.length} pinned movie${pinnedMovies.length !== 1 ? "s" : ""}`}
+          </span>
+
+          {pinnedMovies.length > 0 && (
+            <button
+              onClick={clearPins}
+              className="rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200"
+            >
+              Clear all pins
+            </button>
+          )}
         </div>
 
         {/* Movies Grid */}
