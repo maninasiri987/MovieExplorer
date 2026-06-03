@@ -1,20 +1,9 @@
 import { FaCalendar, FaStar, FaThumbtack } from "react-icons/fa";
-import { useEffect, useState } from "react";
+import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 
-function MovieCard({ movie, active, togglePin }) {
-  const [isMobile, setIsMobile] = useState(false);
+function MovieCard({ movie, active, togglePin, isMobile }) {
   const navigate = useNavigate();
-
-  // Check if mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   // Helper function to convert title to URL-friendly format
   const getMovieUrl = (title) => {
@@ -150,4 +139,4 @@ function MovieCard({ movie, active, togglePin }) {
   );
 }
 
-export default MovieCard;
+export default memo(MovieCard);

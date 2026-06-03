@@ -1,8 +1,11 @@
 import { FaStar, FaThumbtack, FaTrash } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import usePageTitle from "../hooks/usePageTitle";
 
 function Pins({ pinnedMovies, togglePin }) {
+  usePageTitle("Pinned Movies");
+
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
 
