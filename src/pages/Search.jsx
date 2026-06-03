@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaSearch,
@@ -10,7 +10,6 @@ import {
 
 function Search({ movies, togglePin }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredMovies, setFilteredMovies] = useState(movies);
   const [selectedGenre, setSelectedGenre] = useState("All");
   const [sortBy, setSortBy] = useState("relevance");
   const [showFilters, setShowFilters] = useState(false);
@@ -35,8 +34,8 @@ function Search({ movies, togglePin }) {
   // Get unique genres from movies
   const genres = ["All", ...new Set(movies.map((movie) => movie.genre))];
 
-  // Filter and sort movies (no loading state needed for local data)
-  useEffect(() => {
+  // Filter and sort movies (derived from local data, so no extra render needed)
+  const filteredMovies = useMemo(() => {
     let results = [...movies];
 
     // Search filter
@@ -69,7 +68,7 @@ function Search({ movies, togglePin }) {
         break;
     }
 
-    setFilteredMovies(results);
+    return results;
   }, [searchTerm, selectedGenre, sortBy, movies]);
 
   const clearSearch = () => {
